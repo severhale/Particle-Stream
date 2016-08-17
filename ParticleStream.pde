@@ -1,105 +1,3 @@
-import java.util.Arrays;
-
-class Line {
-  private ArrayList<Point> path;
-  int sideMult;
-  public Line(ArrayList<Point> points) {
-    path = points;
-    sideMult = 1;
-  }
-  public Line() {
-    path = new ArrayList<Point>();
-    sideMult = 1;
-  }
-  public void addPoint(Point point) {
-    path.add(point);
-  }
-  public void addPoint(float x, float y, float dx, float dy) {
-    addPoint(new Point(new PVector(x, y), new PVector(dx, dy)));
-  }
-  public void addPoint(PVector pos, PVector vel) {
-    addPoint(pos.x, pos.y, vel.x, vel.y);
-  }
-  public Point getPoint(int index) {
-    return path.get(index);
-  }
-  public ArrayList<Point> points() {
-    return path;
-  }
-  public int numPoints() {
-    return path.size();
-  }
-  public Point lastPoint() {
-    return getPoint(numPoints()-1);
-  }
-  public void draw() {
-    beginShape();
-    for (Point p : path) {
-      vertex(p.x(), p.y());
-    }
-    endShape();
-  }
-  public void drawStrip(float thickness) {
-    beginShape();
-    for (int i=0; i<numPoints(); i++) {
-      Point p = getPoint(i);
-      PVector t = new PVector(-p.dy(), p.dx());
-      //float radius = min(numPoints()/100, 1);
-      float radius = thickness/2;
-      radius *= easeCoef(0, numPoints(), 300, i);
-      t.mult(radius);
-      vertex(p.x() + t.x, p.y() + t.y);
-    }
-    for (int i=numPoints()-1; i>=0; i--) {
-      Point p = getPoint(i);
-      PVector t = new PVector(-p.dy(), p.dx());
-      //float radius = min(numPoints()/100, 10);
-      float radius = .5;
-      radius *= easeCoef(0, numPoints(), 300, i);
-      t.mult(radius);
-      vertex(p.x() - t.x, p.y() - t.y);
-    }
-    endShape();
-  }
-  public PVector getTangent(int i) {
-    Point p = getPoint(i);
-    return p.v.copy();
-  }
-}
-
-class Point {
-  PVector p, v;
-  public Point(PVector position, PVector velocity) {
-    p = position.copy();
-    v = velocity.copy();
-  }
-  public float x() {
-    return p.x;
-  }
-  public float y() {
-    return p.y;
-  }
-  public float dx() {
-    return v.x;
-  }
-  public float dy() {
-    return v.y;
-  }
-}
-
-class LineSystem {
-  ArrayList<Line> lines;
-  float size;
-  int w, h;
-  public LineSystem(int width, int height, float gridSize) {
-    w = width;
-    h = height;
-    size = gridSize;
-    lines = new ArrayList<Line>();
-  }
-  
-}
-
 public float closestPointDistance(Line l, int x, int y) {
   return new PVector(x, y).dist(l.getPoint(closestPointIndex(l, x, y)).p);
 }
@@ -226,15 +124,17 @@ public void shade(ArrayList<Line> lines, float r) {
     for (int i=0; i<l.numPoints(); i++) {
       Point point = l.getPoint(i);
       PVector tangent = point.v.copy().normalize();
-      for (int j=0; j<random(40, 80); j++) {
+      for (int j=0; j<random(30, 50); j++) {
         strokeWeight(1);
-        float d = random(1);
         float easeCoef = easeCoef(0, l.numPoints(), 300, i);
-        d = d*d*r*easeCoef;
-        stroke(0, (1-d/r)*5);
-        PVector midPoint = new PVector(point.x() - tangent.y * d, point.y() + tangent.x * d);
-        PVector startPoint = PVector.add(midPoint, PVector.mult(tangent, random(3)));
-        PVector endPoint = PVector.add(midPoint, PVector.mult(tangent, -random(3)));
+        float d = random(r);
+        d *= d;
+        //stroke(d/r*255, (1-d/r)*15);
+        stroke(0, (1-d/r)*easeCoef*15);
+        //stroke(255);
+        PVector midPoint = new PVector(point.x() - tangent.y * d*easeCoef, point.y() + tangent.x * d*easeCoef);
+        PVector startPoint = PVector.add(midPoint, PVector.mult(tangent, random(5)));
+        PVector endPoint = PVector.add(midPoint, PVector.mult(tangent, -random(5)));
         line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
       }
     }
@@ -253,15 +153,24 @@ public Line curveWalk(int steps) {
   return l;
 }
 
+public void save() {
+  String folder = month() + "-" + day() + "-" + year();
+  String fName = hour() + ";" + minute() + "," + second();
+  String ext = ".png";
+  save(folder + "/" + fName + ext);
+}
+
+LineSystem lines;
+int animTime = 100000;
 void setup() {
   size(900, 900);
-  background(0);
-  ArrayList<Line> lines = new ArrayList<Line>();
-  for (int j=0; j<100; j++) {
-    Line l = curveWalk(1000);
-    l.sideMult = random(1)<.5?1:-1;
-    lines.add(l);
-  }
+  background(255);
+  //ArrayList<Line> lines = new ArrayList<Line>();
+  //for (int j=0; j<10; j++) {
+  //  Line l = curveWalk(1000);
+  //  l.sideMult = random(1)<.5?1:-1;
+  //  lines.add(l);
+  //}
   
   //float[][] finalShading = shade(lines, width, height, 20);
   //for (int i=0; i<width; i++) {
@@ -273,18 +182,54 @@ void setup() {
   //  }
   //}
   
-  noStroke();
-  fill(255);
-  for (Line l : lines) {
-    l.drawStrip(5);
+  lines = new LineSystem(width, height, 25);
+  for (int i=0; i<1; i++) {
+    float x = random(width);
+    float y = random(height);
+    //float a = atan2(height/2-y, width/2-x);
+    float a = random(TWO_PI);
+    lines.addLine(new Point(x, y, cos(a), sin(a), 0));
   }
-  save("test.png");
+  //lines.update(1);
+  
+  //noStroke();
+  //fill(0, 150);
+  //for (Line l : lines.lines) {
+  //  fill(0);
+  //  l.drawStrip(1);
+  //  //float weight = random(10);
+  //  //fill(weight/10*50, 150 - weight/10*100);
+  //  //l.drawStrip(weight);
+  //}
+  //shade(lines.lines, 15);
+  //save("test.png");
 }
 
-void draw() {}
-
-void keyPressed() {
-  Line l = curveWalk(1000);
-  l.sideMult = random(1)<.5?1:-1;
-  l.drawStrip(3);
+void draw() {
+  //background(255);
+  float size = easeCoef(0, animTime, 300, frameCount % animTime);
+  //float size = 2;
+  stroke(0, 5);
+  lines.update(.001);
+  for (Line l : lines.lines) {
+    
+    pushMatrix();
+    translate(l.lastPoint().x(), l.lastPoint().y());
+    rotate(atan2(l.lastPoint().dy(), l.lastPoint().dx()));
+    fill(255);
+    noStroke();
+    ellipse(0, 0, size, size + 4);
+    //if (l.lastPoint().visible()) {
+      fill(0);
+      noStroke();
+      ellipse(0, 0, size*2, size);
+    //}
+    popMatrix();
+    
+    l.lastPoint().shade(1, 25);
+  }
+  if (frameCount % animTime == 0) {
+    save();
+    setup();
+  }
 }
