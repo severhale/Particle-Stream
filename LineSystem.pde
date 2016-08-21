@@ -20,9 +20,9 @@ class LineSystem {
     lines.add(newLine);
     addPoint(newLine, start);
   }
-  public void updateLine(Line l, float range) {
+  public void updateLine(Line l, float range, float fov) {
     Point last = l.lastPoint();
-    Point closest = closestPoint(last);
+    Point closest = closestPoint(last, fov);
     if (closest != null) {
       // GOAL: Adjust velocity to be pointing perpendicular to closest's velocity
       PVector t1 = new PVector(-closest.dy(), closest.dx());
@@ -34,7 +34,7 @@ class LineSystem {
       else {
         newV = angleLerp(last.vel(), t2, .1);
       }
-      Point newPoint = new Point(PVector.add(last.pos(), last.vel()), newV, random(-range, range));
+      Point newPoint = new Point(PVector.add(last.pos(), last.vel()), newV, last.c()*.97 + random(-range, range));
       float d = newPoint.pos().dist(closest.pos());
       if (d <= 7) {
         newPoint.visible = false;
@@ -52,14 +52,14 @@ class LineSystem {
     GridEntry e = getGridEntry(p.x(), p.y());
     e.addPoint(p);
   }
-  public void update(int n, float range) {
+  public void update(int n, float range, float fov) {
     for (int i=0; i<n; i++) {
-      update(range);
+      update(range, fov);
     }
   }
-  public void update(float range) {
+  public void update(float range, float fov) {
     for (Line l : lines) {
-      updateLine(l, range);
+      updateLine(l, range, fov);
     }
   }
   public ArrayList<Point> getPointsNear(float x, float y) {
@@ -85,12 +85,12 @@ class LineSystem {
     return result;
   }
   
-  public Point closestPoint(Point p) {
+  public Point closestPoint(Point p, float fov) {
     Point result = null;
     float bestD = MAX_FLOAT;
     ArrayList<Point> candidates = getPointsNear(p.x(), p.y());
     for (Point q : candidates) {
-      if (PVector.angleBetween(PVector.sub(q.pos(), p.pos()), p.vel()) < PI/5) {
+      if (PVector.angleBetween(PVector.sub(q.pos(), p.pos()), p.vel()) < fov/2) {
         float d = PVector.dist(p.pos(), q.pos());
         if (d < bestD) {
           d = bestD;
@@ -109,6 +109,12 @@ class LineSystem {
     }
     else {
       return new GridEntry();
+    }
+  }
+  
+  public void shade(float r) {
+    for (Line l : lines) {
+      l.shade(r);
     }
   }
 }

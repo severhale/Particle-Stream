@@ -61,7 +61,7 @@ class Point {
         float d = random(r) * side;
         d *= d;
         //stroke(d/r*255, (1-d/r)*15);
-        stroke(0, (1-d/r)*10);
+        stroke(color(g.strokeColor), (1-d/r)*10);
         //stroke(255);
         PVector midPoint = new PVector(x() - dy() * d, y() + dx() * d);
         t.rotate(random(-.1, .1));

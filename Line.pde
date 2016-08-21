@@ -5,11 +5,10 @@ class Line {
   int sideMult;
   public Line(ArrayList<Point> points) {
     path = points;
-    sideMult = 1;
+    sideMult = random(1)<.5?1:-1;
   }
   public Line() {
-    path = new ArrayList<Point>();
-    sideMult = 1;
+    this(new ArrayList<Point>());
   }
   public void addPoint(Point point) {
     path.add(point);
@@ -64,5 +63,10 @@ class Line {
   public PVector getTangent(int i) {
     Point p = getPoint(i);
     return p.v.copy();
+  }
+  public void shade(float r) {
+    for (Point p : points()) {
+      p.shade(sideMult, r);
+    }
   }
 }

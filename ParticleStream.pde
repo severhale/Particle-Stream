@@ -161,7 +161,7 @@ public void save() {
 }
 
 LineSystem lines;
-int animTime = 100000;
+int animTime = 5000;
 void setup() {
   size(900, 900);
   background(255);
@@ -183,11 +183,11 @@ void setup() {
   //}
   
   lines = new LineSystem(width, height, 25);
-  for (int i=0; i<1; i++) {
+  for (int i=0; i<2; i++) {
     float x = random(width);
     float y = random(height);
-    //float a = atan2(height/2-y, width/2-x);
-    float a = random(TWO_PI);
+    float a = atan2(height/2-y, width/2-x);
+    //float a = random(PI, PI + .1);
     lines.addLine(new Point(x, y, cos(a), sin(a), 0));
   }
   //lines.update(1);
@@ -206,27 +206,28 @@ void setup() {
 }
 
 void draw() {
-  //background(255);
-  float size = easeCoef(0, animTime, 300, frameCount % animTime);
-  //float size = 2;
+  //float size = easeCoef(0, animTime, 300, frameCount % animTime) * 5;
   stroke(0, 5);
-  lines.update(.001);
+  lines.update(.001, PI-.01);
   for (Line l : lines.lines) {
-    
+    float size = abs(l.lastPoint().c())*1000;
     pushMatrix();
     translate(l.lastPoint().x(), l.lastPoint().y());
     rotate(atan2(l.lastPoint().dy(), l.lastPoint().dx()));
-    fill(255);
-    noStroke();
-    ellipse(0, 0, size, size + 4);
+    
+    // overlapping ellipse code
+    //fill(255);
+    //noStroke();
+    //ellipse(0, 0, l.lastPoint().vel().mag()*2, size + 10);
+    
     //if (l.lastPoint().visible()) {
       fill(0);
       noStroke();
       ellipse(0, 0, size*2, size);
     //}
     popMatrix();
-    
-    l.lastPoint().shade(1, 25);
+    //stroke(color(255, 0, 0));
+    //l.lastPoint().shade(1, 25);
   }
   if (frameCount % animTime == 0) {
     save();
